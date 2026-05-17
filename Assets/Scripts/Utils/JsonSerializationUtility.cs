@@ -66,6 +66,6 @@ public static class JsonSerializationUtility
     /// </summary>
     public static CustomVector4 QuaternionToCustom(Quaternion q)
     {
-        return new CustomVector4(q);
+        return new CustomVector4(new Vector4(q.x, q.y, q.z, q.w));
     }
 }

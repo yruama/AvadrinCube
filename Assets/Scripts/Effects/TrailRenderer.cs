@@ -17,6 +17,8 @@ public class TrailRenderer : MonoBehaviour
             return;
         }
         _player = playerTransform.gameObject;
+    }
+    
 	// Update is called once per frame
 	void Update ()
     {
