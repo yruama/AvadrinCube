@@ -1,6 +1,3 @@
-﻿
-
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
@@ -19,104 +16,134 @@ enum SwitchCall
 
 public class Switches : MonoBehaviour, IResettable
 {
-    [SerializeField] Material activatedMaterial;
-    private Material _mat;
+    [SerializeField] private Material activatedMaterial;
+    [SerializeField] private bool Timer;
+    [SerializeField] private float timerDuration;
+    [SerializeField] private GameObject[] objectsToActivate;
+    [SerializeField] private SwitchType switchType;
+    [SerializeField] private SwitchCall switchCall;
+    [SerializeField] private Transform _sprite;
 
-    [SerializeField] bool Timer = false;
-    [SerializeField] float timerDuration;
-
-    private bool isActive;
-
-    [SerializeField] GameObject[] objectsToActivate;
-    private float _timer;
-
-    public GameObject trailObj;
-    private List<GameObject> _trail = new List<GameObject>();
-
-
-    [SerializeField] SwitchType switchType;
-    [SerializeField] SwitchCall switchCall;
-
-    [SerializeField] Transform _sprite;
+    private Material _defaultMaterial;
+    private bool _isActive;
+    private float _timerStart;
+    private bool[] _initialObjectStates;
 
     private void Start()
     {
-        _mat = transform.GetComponent<MeshRenderer>().material;
+        _defaultMaterial = GetComponent<MeshRenderer>().material;
+
+        if (objectsToActivate != null)
+        {
+            _initialObjectStates = new bool[objectsToActivate.Length];
+            for (int i = 0; i < objectsToActivate.Length; i++)
+                _initialObjectStates[i] = objectsToActivate[i] != null && objectsToActivate[i].activeSelf;
+        }
     }
 
     void Update()
     {
-        if (Timer && isActive && Time.time - _timer > timerDuration)
-        {
-            gameObject.GetComponent<MeshRenderer>().material = _mat;
-            _timer = Time.time;
-            _sprite.gameObject.SetActive(false);
-            isActive = false;
+        if (!Timer || !_isActive || Time.time - _timerStart <= timerDuration)
+            return;
 
-            foreach (var item in objectsToActivate)
-            {
-                // Destroy(_trail[0]);
-                // _trail.RemoveAt(0);
-
-                if (switchCall == SwitchCall.ActiveGameObject)
-                    item.SetActive(!item.activeSelf);
-                else
-                    item.SendMessage("CallFromSwitch");
-            }
-        }
+        DeactivateSwitch();
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if ((switchType == SwitchType.Pression && other.gameObject.tag == GameConstants.TAG_PLAYER) ||
-            (switchType == SwitchType.Projectile && other.gameObject.tag == GameConstants.TAG_PROJECTILE_PARRY))
+        bool playerPress = switchType == SwitchType.Pression && other.CompareTag(GameConstants.TAG_PLAYER);
+        bool projectileHit = switchType == SwitchType.Projectile && other.CompareTag(GameConstants.TAG_PROJECTILE_PARRY);
+
+        if (!playerPress && !projectileHit)
+            return;
+
+        if (Timer)
         {
-            if (Timer)
-            {
-                _timer = Time.time;
-                gameObject.GetComponent<MeshRenderer>().material = activatedMaterial;
-                if (!isActive) ActivateObject();
-                isActive = true;
+            _timerStart = Time.time;
+            GetComponent<MeshRenderer>().material = activatedMaterial;
+            if (!_isActive)
+                ActivateTargets();
+            _isActive = true;
 
-                _sprite.gameObject.SetActive(true);
-                _sprite.transform.GetChild(0).localScale = new Vector3(0, 1.75f, 1);
-                _sprite.GetChild(0).DOScaleX(23f, timerDuration).SetEase(Ease.Linear);
-            }
-            else if (!isActive)
-            {
-                _timer = Time.time;
-                isActive = true;
-
-                ActivateObject();
-
-                gameObject.GetComponent<MeshRenderer>().material = activatedMaterial;
-            }
+            _sprite.gameObject.SetActive(true);
+            _sprite.GetChild(0).localScale = new Vector3(0f, 1.75f, 1f);
+            _sprite.GetChild(0).DOScaleX(23f, timerDuration).SetEase(Ease.Linear);
+        }
+        else if (!_isActive)
+        {
+            _isActive = true;
+            ActivateTargets();
+            GetComponent<MeshRenderer>().material = activatedMaterial;
         }
     }
 
-    void ActivateObject()
+    private void ActivateTargets()
     {
-        foreach (var item in objectsToActivate)
+        if (objectsToActivate == null)
+            return;
+
+        foreach (GameObject item in objectsToActivate)
         {
-            // GameObject go = Instantiate(trailObj, transform.position, Quaternion.identity) as GameObject;
-            // go.transform.SetParent(transform);
-            // go.GetComponent<TrailSwitchTimer>().SetTarget(item);
-            // _trail.Add(go);
+            if (item == null)
+                continue;
 
             if (switchCall == SwitchCall.ActiveGameObject)
             {
                 item.SetActive(!item.activeSelf);
-            }
-            else
-            {
-                item.SendMessage("EnableFromSwitch");
+                continue;
             }
 
+            ISwitchable switchable = item.GetComponent<ISwitchable>();
+            if (switchable != null)
+                switchable.EnableFromSwitch();
+            else
+                item.BroadcastMessage("EnableFromSwitch", SendMessageOptions.DontRequireReceiver);
         }
     }
-    
+
+    private void DeactivateSwitch()
+    {
+        GetComponent<MeshRenderer>().material = _defaultMaterial;
+        _sprite.gameObject.SetActive(false);
+        _isActive = false;
+
+        if (objectsToActivate == null)
+            return;
+
+        foreach (GameObject item in objectsToActivate)
+        {
+            if (item == null)
+                continue;
+
+            if (switchCall == SwitchCall.ActiveGameObject)
+            {
+                item.SetActive(!item.activeSelf);
+                continue;
+            }
+
+            ISwitchable switchable = item.GetComponent<ISwitchable>();
+            if (switchable != null)
+                switchable.CallFromSwitch();
+            else
+                item.BroadcastMessage("CallFromSwitch", SendMessageOptions.DontRequireReceiver);
+        }
+    }
+
     public void ResetState()
     {
-        
+        _isActive = false;
+        GetComponent<MeshRenderer>().material = _defaultMaterial;
+
+        if (_sprite != null)
+            _sprite.gameObject.SetActive(false);
+
+        if (objectsToActivate == null || _initialObjectStates == null)
+            return;
+
+        for (int i = 0; i < objectsToActivate.Length; i++)
+        {
+            if (objectsToActivate[i] != null)
+                objectsToActivate[i].SetActive(_initialObjectStates[i]);
+        }
     }
 }

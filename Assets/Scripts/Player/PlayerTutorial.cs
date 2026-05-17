@@ -1,43 +1,36 @@
-using UnityEngine;
 using System.Collections.Generic;
-using System.IO;
+using UnityEngine;
 
 public class PlayerTutorial : MonoBehaviour
 {
-    private bool _canMove = false;
     public string fileName;
-    private List<Vector3> positionsEnregistrees = new List<Vector3>();
-    private int currentPosition = 0;
-    // Start is called before the first frame update
+
+    private bool _canMove;
+    private readonly List<Vector3> _positions = new List<Vector3>();
+    private int _currentIndex;
+
     void Start()
     {
-        // Utiliser Resources.Load pour charger le fichier JSON
-        TextAsset jsonTextAsset = Resources.Load<TextAsset>("GhostTutorial/" + fileName);
+        TextAsset json = Resources.Load<TextAsset>("GhostTutorial/" + fileName);
+        if (json == null)
+        {
+            Debug.LogError($"GhostTutorial/{fileName} introuvable dans Resources.");
+            return;
+        }
 
-        // Vérifier si le fichier JSON existe
-        if (jsonTextAsset != null)
-        {
-            // Lire le contenu du fichier JSON
-            PositionData positionData = JsonUtility.FromJson<PositionData>(jsonTextAsset.text);
-            positionsEnregistrees = positionData.positions;
-        }
-        else
-        {
-            Debug.LogError("Le fichier JSON n'existe pas.");
-        }
+        PositionData data = JsonUtility.FromJson<PositionData>(json.text);
+        if (data?.positions != null)
+            _positions.AddRange(data.positions);
     }
 
-    // Update is called once per frame
     void FixedUpdate()
     {
-        if (positionsEnregistrees.Count == 0 || !_canMove) return;
+        if (!_canMove || _positions.Count == 0)
+            return;
 
-        transform.position = positionsEnregistrees[currentPosition];
-        currentPosition += 1;
-        if (currentPosition == positionsEnregistrees.Count) currentPosition = 0;
+        transform.position = _positions[_currentIndex];
+        _currentIndex = (_currentIndex + 1) % _positions.Count;
     }
 
-    public void StartMovement() {
-        _canMove = true;
-    }
+    public void StartMovement() => _canMove = true;
 }

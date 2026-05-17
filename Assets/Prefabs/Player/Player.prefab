@@ -223,7 +223,10 @@ GameObject:
   - component: {fileID: 8448004863221552967}
   - component: {fileID: 4362724293328905186}
   - component: {fileID: 6037556674120641823}
+  - component: {fileID: 1111222233334444555}
+  - component: {fileID: 2222333344445555666}
   - component: {fileID: 7512540961679155178}
+  - component: {fileID: 9182736450192837465}
   - component: {fileID: 832232787085683764}
   - component: {fileID: 2002857058813891902}
   - component: {fileID: 5252446663090567181}
@@ -294,7 +297,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   playerLevel: 15
-  raycastDistance: 0.51
   groundLayer:
     serializedVersion: 2
     m_Bits: 128
@@ -334,6 +336,30 @@ MonoBehaviour:
     m_Interactions: 
     m_SingletonActionBindings: []
     m_Flags: 0
+--- !u!114 &1111222233334444555
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5162194759043994569}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7a4b2c13f4d5490a8b1c2d3e4f5a6b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerDeath
+--- !u!114 &2222333344445555666
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5162194759043994569}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8b5c3d24e5f4601b9c2d3e4f6a7b8c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerHazardDetector
 --- !u!114 &7512540961679155178
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -347,6 +373,31 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   _moveSpeed: 15
+--- !u!114 &9182736450192837465
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5162194759043994569}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3df9bf1a8ea774064816e26717b3ac92, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerPhysicsHandler
+  _controller: {fileID: 4268306623648917432}
+  _groundLayer:
+    serializedVersion: 2
+    m_Bits: 128
+  _raycastDistance: 0.51
+  _raycastOriginHeight: 0.1
+  _groundAcceleration: 80
+  _groundDeceleration: 90
+  _airAcceleration: 40
+  _airDeceleration: 30
+  _maxAirSpeedMultiplier: 1.1
+  _gravityMultiplier: 10
+  _groundStickForce: 2
 --- !u!114 &832232787085683764
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -361,7 +412,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerJump
   _maxJumpVelocity: 20
   _minJumpVelocity: 5
-  _gravityMultiplier: 10
   jumpFx: {fileID: 160982, guid: 69f14c029c58645489c680952aed434c, type: 3}
   feedbackJumpTime: 0.12
 --- !u!114 &2002857058813891902

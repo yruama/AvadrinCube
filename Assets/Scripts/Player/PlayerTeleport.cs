@@ -1,94 +1,68 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
-using DG.Tweening;
 using UnityEngine.InputSystem;
 
 public class PlayerTeleport : MonoBehaviour
 {
-    enum TeleportState
-    {
-        TELEPORT,
-        SAVEPOS
-    }
+    private enum TeleportState { SavePos, Teleport }
 
-    private TeleportState _state;
+    [SerializeField] private GameObject _copy;
+    [SerializeField] private float _transitionDuration = 0.1f;
 
-    [SerializeField]
-    private GameObject _copy;
-    private GameObject _teleport;
-
+    private TeleportState _state = TeleportState.SavePos;
+    private GameObject _teleportMarkerRoot;
     private Vector3 _savePosition;
-
     private PlayerController _playerController;
-
-    private const float transitionTime = 0.1f;
-
-    private int _teleportState = 0;
-
-    public void SetUI()
-    {
-        _playerController = GetComponent<PlayerController>();
-    }
 
     void Start()
     {
         _playerController = GetComponent<PlayerController>();
-        _state = TeleportState.SAVEPOS;
+        _playerController.teleportAction.performed += OnTeleportPerformed;
+        _playerController.teleportAction.canceled += OnTeleportCanceled;
+    }
 
-        _playerController.teleportAction.canceled += OnMyTeleportActionCanceled;
-        _playerController.teleportAction.performed += OnMyTeleportActionPerformed;
-	}
+    void OnDestroy()
+    {
+        if (_playerController?.teleportAction == null)
+            return;
 
-    void OnMyTeleportActionPerformed(InputAction.CallbackContext context) {
+        _playerController.teleportAction.performed -= OnTeleportPerformed;
+        _playerController.teleportAction.canceled -= OnTeleportCanceled;
+    }
+
+    void OnTeleportPerformed(InputAction.CallbackContext context)
+    {
         if (!_playerController.CanTeleport)
             return;
 
-        if (_state == TeleportState.SAVEPOS)
+        if (_state == TeleportState.SavePos)
         {
             _savePosition = transform.position;
-            _state = TeleportState.TELEPORT;
-            _teleport = Instantiate(_copy, new Vector3(transform.position.x, transform.position.y, transform.position.z), transform.rotation) as GameObject;
-            if (_teleport != null)
+            _state = TeleportState.Teleport;
+
+            _teleportMarkerRoot = Instantiate(_copy, transform.position, transform.rotation);
+            if (_teleportMarkerRoot == null)
             {
-                _teleport = _teleport.transform.GetChild(0).gameObject;
-            }
-            else
-            {
-                Debug.LogError("Failed to instantiate teleport copy");
-                _state = TeleportState.SAVEPOS;
-            }
-        }
-        else if (_state == TeleportState.TELEPORT)
-        {
-            if (_teleport == null)
-            {
-                Debug.LogError("Teleport object is null. Cannot complete teleportation.");
+                _state = TeleportState.SavePos;
                 return;
             }
+        }
+        else
+        {
+            if (_teleportMarkerRoot == null)
+                return;
 
-            Teleport(_savePosition);
             _playerController.CanMove = false;
-            _state = TeleportState.SAVEPOS;
+            PlayerTeleportEffects.AnimateTo(transform, _savePosition, _transitionDuration, () =>
+            {
+                Destroy(_teleportMarkerRoot.transform.parent != null
+                    ? _teleportMarkerRoot.transform.parent.gameObject
+                    : _teleportMarkerRoot);
+                _teleportMarkerRoot = null;
+                _playerController.CanMove = true;
+                _state = TeleportState.SavePos;
+            });
         }
     }
 
-    void OnMyTeleportActionCanceled(InputAction.CallbackContext context) {
-
-    }
-
-    public void Teleport(Vector3 target)
-    {
-        _playerController.CanMove = false;
-        DOTween.To(() => transform.position, x => transform.position = x, target, transitionTime).OnComplete(() => {
-            transform.localScale = new Vector3(2, 2, 2);
-            DOTween.To(() => transform.localScale, x => transform.localScale = x, new Vector3(1f, 1f, 1f), transitionTime).OnComplete(() => {
-                transform.localScale = Vector3.one;
-            });
-            Destroy(_teleport.transform.parent.gameObject);
-            _playerController.CanMove = true;
-        });
-    }
-
+    void OnTeleportCanceled(InputAction.CallbackContext context) { }
 }

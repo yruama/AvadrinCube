@@ -1,65 +1,48 @@
-using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
+/// <summary>Outil debug : enregistre une trajectoire via manette.</summary>
 public class PlayerGhost : MonoBehaviour
 {
-    public bool isTestMode = false;
+    public bool isTestMode;
 
-    private bool savePosition = false;
-
-    private List<Vector3> positionsEnregistrees = new List<Vector3>();
+    private bool _isRecording;
+    private readonly List<Vector3> _recordedPositions = new List<Vector3>();
     private Gamepad _gamepad;
 
-    void Start() {
+    void Start()
+    {
         _gamepad = Gamepad.current;
     }
 
-    void Update() {
+    void Update()
+    {
+        if (_gamepad == null)
+            return;
 
-        if (_gamepad.leftShoulder.IsPressed()) {
-            savePosition = true;
-        }
+        if (_gamepad.leftShoulder.isPressed)
+            _isRecording = true;
 
-        if (_gamepad.leftShoulder.wasReleasedThisFrame) {
-            savePosition = false;
-            // Sauvegardez les positions dans un fichier JSON
-            SauvegarderPositionsEnJSON();
+        if (_gamepad.leftShoulder.wasReleasedThisFrame)
+        {
+            _isRecording = false;
+            SavePositionsToJson();
         }
     }
 
     void FixedUpdate()
     {
-        Debug.Log("Coucou");
-        if (isTestMode) {
-            if (savePosition) {
-                positionsEnregistrees.Add(transform.position);
-            }
-        }
-        
+        if (!isTestMode || !_isRecording)
+            return;
+
+        _recordedPositions.Add(transform.position);
     }
 
-    private void SauvegarderPositionsEnJSON()
+    private void SavePositionsToJson()
     {
-        Debug.Log("oui !");
-        string jsonPath = "Assets/PositionsEnregistrees.json"; // Chemin du fichier JSON, ajustez selon vos besoins
-
-        // Convertissez la liste de positions en JSON
-        string positionsJSON = JsonUtility.ToJson(new PositionData(positionsEnregistrees));
-
-        // Écrivez le JSON dans un fichier
-        File.WriteAllText(jsonPath, positionsJSON);
-    }
-}
-
-[System.Serializable]
-public class PositionData
-{
-    public List<Vector3> positions;
-
-    public PositionData(List<Vector3> positions)
-    {
-        this.positions = positions;
+        string jsonPath = Path.Combine(Application.dataPath, "PositionsEnregistrees.json");
+        JsonSerializationUtility.SaveToJson(jsonPath, new PositionData(_recordedPositions));
     }
 }

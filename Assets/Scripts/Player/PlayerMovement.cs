@@ -1,39 +1,46 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
-public class PlayerMovement : MonoBehaviour
+[RequireComponent(typeof(PlayerPhysicsHandler))]
+public class PlayerMovement : MonoBehaviour, IResettable
 {
-    [SerializeField]
-    private float _moveSpeed;
+    [SerializeField] private PlayerGameplayConfig _config;
+    [SerializeField] private float _moveSpeed = 5f;
 
     private PlayerController _playerController;
+    private PlayerPhysicsHandler _physicsHandler;
+    private Vector3 _desiredVelocity;
+    private Vector3 _startPosition;
 
     private void Awake()
     {
         _playerController = GetComponent<PlayerController>();
+        _physicsHandler = GetComponent<PlayerPhysicsHandler>();
+        _startPosition = transform.position;
+
+        if (_config != null)
+            _moveSpeed = _config.moveSpeed;
     }
 
     private void Update()
     {
+        if (_playerController == null)
+            return;
+
         Vector2 axisInput = _playerController.moveAction.ReadValue<Vector2>();
-        axisInput *= _moveSpeed;
+        Vector3 direction = new Vector3(axisInput.x, 0f, axisInput.y);
 
-        if (_playerController.CanMove)
-        {
-            _playerController.Controller.Move(new Vector3(axisInput.x, _playerController.JumpVelocity, axisInput.y) * Time.deltaTime);
-        }
-    }
-    
-    public void SetParent(Transform newParent)
-    {
-       transform.parent = newParent;
+        if (direction.sqrMagnitude > 1f)
+            direction.Normalize();
 
+        _desiredVelocity = _playerController.CanMove ? direction * _moveSpeed : Vector3.zero;
+        _physicsHandler?.SetDesiredHorizontalVelocity(_desiredVelocity);
     }
 
-    public void ClearParent()
+    public void ResetState()
     {
-         transform.parent = null;
+        transform.position = _startPosition;
+        _desiredVelocity = Vector3.zero;
+        _physicsHandler?.SetDesiredHorizontalVelocity(Vector3.zero);
+        _physicsHandler?.DetachFromPlatform(false);
     }
 }

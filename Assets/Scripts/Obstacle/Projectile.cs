@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
@@ -52,7 +52,7 @@ public class Projectile : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.tag == GameConstants.TAG_WALL)
+        if (other.CompareTag(GameConstants.TAG_WALL))
             Destruction();
     }
 }
