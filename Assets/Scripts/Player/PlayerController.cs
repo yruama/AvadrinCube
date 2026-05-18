@@ -21,6 +21,9 @@ public enum Actions
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
+    [SerializeField] private Actions initialActions = Actions.Move | Actions.Jump | Actions.Teleport | Actions.Parry;
+
+    [Tooltip("Legacy fallback: if non-zero, ce int est interprété comme un mask Actions.")]
     public int playerLevel;
 
     [SerializeField] private LayerMask groundLayer;
@@ -33,6 +36,7 @@ public class PlayerController : MonoBehaviour
     private bool _canParry;
     private bool _canTeleport;
     private bool _isParrying;
+    private bool _inputEnabled;
 
     private Control _control;
 
@@ -45,11 +49,27 @@ public class PlayerController : MonoBehaviour
     {
         _control = new Control();
         _controller = GetComponent<CharacterController>();
+
+        if (_controller == null)
+        {
+            Debug.LogError("PlayerController requires a CharacterController on the GameObject.");
+            enabled = false;
+            return;
+        }
+
+        moveAction = _control.Player.Move;
+        jumpAction = _control.Player.Jump;
+        parryAction = _control.Player.Parry;
+        teleportAction = _control.Player.Teleport;
     }
 
     void Start()
     {
-        SetUpActions(playerLevel);
+        Actions actions = initialActions != 0 ? initialActions : (Actions)playerLevel;
+        if (actions == 0)
+            actions = Actions.Move | Actions.Jump | Actions.Teleport | Actions.Parry;
+
+        SetUpActions(actions);
     }
 
     void OnEnable()
@@ -65,44 +85,44 @@ public class PlayerController : MonoBehaviour
     public void SetInputEnabled(bool enabled)
     {
         if (moveAction == null)
-        {
-            moveAction = _control.Player.Move;
-            jumpAction = _control.Player.Jump;
-            parryAction = _control.Player.Parry;
-            teleportAction = _control.Player.Teleport;
-        }
+            return;
 
         if (enabled)
         {
+            if (_inputEnabled)
+                return;
+
             moveAction.Enable();
             jumpAction.Enable();
             parryAction.Enable();
             teleportAction.Enable();
+            _inputEnabled = true;
         }
         else
         {
+            if (!_inputEnabled)
+                return;
+
             moveAction.Disable();
             jumpAction.Disable();
             parryAction.Disable();
             teleportAction.Disable();
+            _inputEnabled = false;
         }
     }
 
     public void AddAction(Actions action) => _actions |= action;
     public void RemoveAction(Actions action) => _actions &= ~action;
 
-    public void SetUpActions(int valeur)
+    public void SetUpActions(Actions actions)
     {
-        foreach (Actions action in Enum.GetValues(typeof(Actions)))
-        {
-            if (((int)action & valeur) != 0)
-                AddAction(action);
-        }
-
+        _actions = actions;
         ActivateAction();
     }
 
     public bool IsActionActive(Actions action) => (_actions & action) == action;
+
+    public Vector2 MoveInput => moveAction != null ? moveAction.ReadValue<Vector2>() : Vector2.zero;
 
     public void ActivateAction()
     {

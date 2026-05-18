@@ -4,11 +4,11 @@ using UnityEngine;
 public class PlayerGameplayConfig : ScriptableObject
 {
     [Header("Movement")]
-    public float moveSpeed = 15f;
+    public float moveSpeed = 8f;
 
     [Header("Jump")]
-    public float maxJumpVelocity = 20f;
-    public float minJumpVelocity = 5f;
+    public float maxJumpVelocity = 6.25f;
+    public float minJumpVelocity = 3.5f;
     public float jumpFeedbackDuration = 0.12f;
 
     [Header("Physics")]
@@ -16,7 +16,7 @@ public class PlayerGameplayConfig : ScriptableObject
     public float groundDeceleration = 90f;
     public float airAcceleration = 40f;
     public float airDeceleration = 30f;
-    public float gravityMultiplier = 10f;
+    public float gravityMultiplier = 25f;
     public float groundStickForce = 2f;
     public float platformCheckDistance = 0.8f;
 }

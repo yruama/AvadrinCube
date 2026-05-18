@@ -8,12 +8,14 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour, IResettable
 {
     [SerializeField] private PlayerGameplayConfig _config;
-    [SerializeField] private float _moveSpeed = 5f;
+    [SerializeField] private float _moveSpeed = 8f;
 
     private PlayerController _playerController;
     private PlayerPhysicsHandler _physicsHandler;
     private Vector3 _desiredVelocity;
     private Vector3 _startPosition;
+
+    private float MoveSpeed => _config != null ? _config.moveSpeed : _moveSpeed;
 
     private void Awake()
     {
@@ -21,8 +23,8 @@ public class PlayerMovement : MonoBehaviour, IResettable
         _physicsHandler = GetComponent<PlayerPhysicsHandler>();
         _startPosition = transform.position;
 
-        if (_config != null)
-            _moveSpeed = _config.moveSpeed;
+        if (_config == null)
+            Debug.LogWarning("PlayerMovement: no PlayerGameplayConfig assigned, using local moveSpeed.");
 
         if (_physicsHandler == null)
         {
@@ -37,13 +39,13 @@ public class PlayerMovement : MonoBehaviour, IResettable
         if (_playerController == null)
             return;
 
-        Vector2 axisInput = _playerController.moveAction.ReadValue<Vector2>();
+        Vector2 axisInput = _playerController.MoveInput;
         Vector3 direction = new Vector3(axisInput.x, 0f, axisInput.y);
 
         if (direction.sqrMagnitude > 1f)
             direction.Normalize();
 
-        _desiredVelocity = _playerController.CanMove ? direction * _moveSpeed : Vector3.zero;
+        _desiredVelocity = _playerController.CanMove ? direction * MoveSpeed : Vector3.zero;
         _physicsHandler?.SetDesiredHorizontalVelocity(_desiredVelocity);
     }
 
@@ -51,6 +53,8 @@ public class PlayerMovement : MonoBehaviour, IResettable
     /// Réinitialise l'état du joueur (position de départ, velocities) utilisé par les systèmes de reset.
     /// Détache le joueur de toute plateforme si nécessaire.
     /// </summary>
+    public PlayerGameplayConfig GameplayConfig => _config;
+
     public void ResetState()
     {
         transform.position = _startPosition;

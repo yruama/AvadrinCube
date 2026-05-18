@@ -10,6 +10,8 @@ public class PlayerPhysicsHandler : MonoBehaviour
 {
     private CharacterController _controller;
     private PlayerController _playerController;
+    [SerializeField] private PlayerGameplayConfig _gameplayConfig;
+    [SerializeField] private float _gravityMultiplier = GameConstants.GRAVITY_MULTIPLIER;
 
     // Movement
     private Vector3 _desiredHorizontalVelocity = Vector3.zero;
@@ -29,14 +31,30 @@ public class PlayerPhysicsHandler : MonoBehaviour
     {
         _controller = GetComponent<CharacterController>();
         _playerController = GetComponent<PlayerController>();
+
         if (_playerController != null)
             _groundLayer = _playerController.GroundLayer;
+
+        if (_groundLayer == 0)
+            _groundLayer = GameConstants.GroundAndPlatformMask;
+
         if (_controller == null)
         {
             Debug.LogError("PlayerPhysicsHandler requiert un CharacterController sur le GameObject.");
             enabled = false;
             return;
         }
+    }
+
+    void Start()
+    {
+        if (_gameplayConfig == null)
+            _gameplayConfig = GetComponent<PlayerMovement>()?.GameplayConfig;
+
+        if (_gameplayConfig != null)
+            _gravityMultiplier = Mathf.Max(0.1f, _gameplayConfig.gravityMultiplier);
+        else
+            Debug.LogWarning("PlayerPhysicsHandler: no PlayerGameplayConfig found, using default gravity multiplier.");
     }
 
     void OnEnable()
@@ -60,40 +78,60 @@ public class PlayerPhysicsHandler : MonoBehaviour
 
     private void UpdateGroundDetection()
     {
-        Vector3 origin = transform.position + Vector3.up * 0.1f;
-        RaycastHit hit;
-        bool found = Physics.Raycast(origin, Vector3.down, out hit, _groundCheckDistance + 0.1f, _groundLayer.value);
+        _wasGroundedLastFrame = _isGrounded;
 
-        if (found)
-        {
-            _isGrounded = true;
+        bool hitGround = Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, _controller.height * 0.5f + _groundCheckDistance, _groundLayer, QueryTriggerInteraction.Ignore);
+        bool platformSurface = DetectPlatformSurface();
+        _isGrounded = _controller.isGrounded || hitGround || platformSurface;
 
-            // Check platform attachment
-            MovingPlatformSurface surface = hit.collider.GetComponent<MovingPlatformSurface>() ?? hit.collider.GetComponentInParent<MovingPlatformSurface>();
-            if (surface != null && surface.Platform != null)
-            {
-                if (_currentPlatform != surface.Platform)
-                {
-                    // attach
-                    _currentPlatform = surface.Platform;
-                    _currentPlatform?.SetPassenger(_controller, true);
-                }
-            }
-            else
-            {
-                DetachFromPlatform(false);
-            }
-        }
-        else
+        if (!_isGrounded || (!platformSurface && _currentPlatform != null))
         {
-            _isGrounded = false;
             DetachFromPlatform(false);
         }
     }
 
+    private bool DetectPlatformSurface()
+    {
+        if (_controller == null)
+            return false;
+
+        float checkDistance = Mathf.Max(_groundCheckDistance, 0.05f);
+        float sphereRadius = Mathf.Clamp(_controller.radius * 0.9f, 0.05f, _controller.radius);
+        Vector3 sphereCenter = transform.position + Vector3.down * (_controller.height * 0.5f - sphereRadius);
+        Vector3 overlapCenter = sphereCenter + Vector3.down * checkDistance;
+
+        Collider[] hits = Physics.OverlapSphere(overlapCenter, sphereRadius, _groundLayer, QueryTriggerInteraction.Ignore);
+        foreach (Collider hit in hits)
+        {
+            MovingPlatformSurface surface = hit.GetComponent<MovingPlatformSurface>() ?? hit.GetComponentInParent<MovingPlatformSurface>();
+            if (surface != null && surface.Platform != null)
+            {
+                AttachPlatformSurface(surface);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void AttachPlatformSurface(MovingPlatformSurface surface)
+    {
+        if (surface == null || surface.Platform == null)
+            return;
+
+        if (_currentPlatform != surface.Platform)
+        {
+            _currentPlatform?.SetPassenger(_controller, false);
+            _currentPlatform = surface.Platform;
+            _currentPlatform.SetPassenger(_controller, true);
+        }
+    }
+
+    private float GravityMultiplier => _gameplayConfig != null ? Mathf.Max(0.1f, _gameplayConfig.gravityMultiplier) : Mathf.Max(0.1f, _gravityMultiplier);
+
     private void ApplyGravity(float dt)
     {
-        float gravity = GameConstants.GRAVITY_MULTIPLIER;
+        float gravity = GravityMultiplier;
         if (_isGrounded && _verticalVelocity < 0f)
             _verticalVelocity = 0f;
         else

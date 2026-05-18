@@ -17,24 +17,25 @@ public class PlayerJump : MonoBehaviour
 
     private PlayerController _playerController;
     private PlayerPhysicsHandler _physicsHandler;
-    private bool _hasJump = true;
+    private bool _jumpAvailable = true;
     private bool _isJumping;
     private bool _showJumpFx;
 
+    private float MaxJumpVelocity => _config != null ? _config.maxJumpVelocity : _maxJumpVelocity;
+    private float MinJumpVelocity => _config != null ? _config.minJumpVelocity : _minJumpVelocity;
+    private float JumpFeedbackTime => _config != null ? _config.jumpFeedbackDuration : feedbackJumpTime;
+
     void Awake()
     {
-        if (_config != null)
-        {
-            _maxJumpVelocity = _config.maxJumpVelocity;
-            _minJumpVelocity = _config.minJumpVelocity;
-            feedbackJumpTime = _config.jumpFeedbackDuration;
-        }
     }
 
     void Start()
     {
         _playerController = GetComponent<PlayerController>();
         _physicsHandler = GetComponent<PlayerPhysicsHandler>();
+
+        if (_config == null)
+            Debug.LogWarning("PlayerJump: no PlayerGameplayConfig assigned, using local jump values.");
 
         if (_playerController == null)
         {
@@ -68,15 +69,15 @@ public class PlayerJump : MonoBehaviour
 
     void OnJumpPerformed(InputAction.CallbackContext context)
     {
-        if (!_hasJump || _isJumping || _physicsHandler == null || !CanJumpNow())
+        if (!_jumpAvailable || _physicsHandler == null || !CanJumpNow() || !_playerController.CanJump)
             return;
 
         if (!_showJumpFx)
             Invoke(nameof(ActivateFx), 0.1f);
 
-        _hasJump = false;
+        _jumpAvailable = false;
         _isJumping = true;
-        _physicsHandler.SetVerticalVelocity(_maxJumpVelocity);
+        _physicsHandler.SetVerticalVelocity(MaxJumpVelocity);
         _physicsHandler.DetachFromPlatform(inheritVelocity: true);
         PlayJumpFeedback();
     }
@@ -84,10 +85,10 @@ public class PlayerJump : MonoBehaviour
     void OnJumpCanceled(InputAction.CallbackContext context)
     {
         if (_physicsHandler != null &&
-            _physicsHandler.VerticalVelocity > _minJumpVelocity &&
+            _physicsHandler.VerticalVelocity > MinJumpVelocity &&
             _playerController.CanJump)
         {
-            _physicsHandler.SetVerticalVelocity(_minJumpVelocity);
+            _physicsHandler.SetVerticalVelocity(MinJumpVelocity);
         }
 
         _isJumping = false;
@@ -98,20 +99,24 @@ public class PlayerJump : MonoBehaviour
         if (_physicsHandler == null)
             return;
 
-        if (_physicsHandler.IsGrounded)
+        bool grounded = _physicsHandler.IsGrounded || (_playerController != null && _playerController.Controller != null && _playerController.Controller.isGrounded);
+        if (grounded)
         {
             if (_showJumpFx)
             {
                 _showJumpFx = false;
-                GameObject fx = Instantiate(
-                    jumpFx,
-                    new Vector3(transform.position.x, transform.position.y - 0.4f, transform.position.z),
-                    Quaternion.identity);
-                fx.transform.eulerAngles = new Vector3(90f, 0f, 0f);
+                if (jumpFx != null)
+                {
+                    GameObject fx = Instantiate(
+                        jumpFx,
+                        new Vector3(transform.position.x, transform.position.y - 0.4f, transform.position.z),
+                        Quaternion.identity);
+                    fx.transform.eulerAngles = new Vector3(90f, 0f, 0f);
+                }
             }
 
-            if (!_isJumping)
-                _hasJump = true;
+            _jumpAvailable = true;
+            _isJumping = false;
         }
         else
         {
@@ -134,10 +139,10 @@ public class PlayerJump : MonoBehaviour
             return;
 
         Transform visual = transform.GetChild(0);
-        DOTween.To(() => visual.localScale, x => visual.localScale = x, Vector3.one * 0.75f, feedbackJumpTime)
+        DOTween.To(() => visual.localScale, x => visual.localScale = x, Vector3.one * 0.75f, JumpFeedbackTime)
             .OnComplete(() =>
             {
-                DOTween.To(() => visual.localScale, x => visual.localScale = x, Vector3.one, feedbackJumpTime);
+                DOTween.To(() => visual.localScale, x => visual.localScale = x, Vector3.one, JumpFeedbackTime);
             });
     }
 }
