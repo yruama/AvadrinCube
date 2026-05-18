@@ -1,5 +1,9 @@
 using UnityEngine;
 
+/// <summary>
+/// Gère le volume d'une source audio en fonction de la distance au joueur.
+/// Utilise le <see cref="GameRegistry"/> pour récupérer le joueur si possible.
+/// </summary>
 public class SoundManager : MonoBehaviour
 {
     public float maxHearingDistance = 10f;
@@ -11,28 +15,42 @@ public class SoundManager : MonoBehaviour
     void Start()
     {
         audioSource = GetComponent<AudioSource>();
-        GameObject playerObject = GameObject.FindGameObjectWithTag(GameConstants.TAG_PLAYER);
-        if (playerObject == null)
+        if (audioSource == null)
         {
-            Debug.LogError($"Player with tag '{GameConstants.TAG_PLAYER}' not found. SoundManager will be disabled.");
+            Debug.LogError("SoundManager nécessite un AudioSource sur le même GameObject. Composant introuvable.");
             enabled = false;
             return;
         }
-        player = playerObject.transform;
+
+        if (GameRegistry.Instance != null && GameRegistry.Instance.GetPlayerTransform() != null)
+        {
+            player = GameRegistry.Instance.GetPlayerTransform();
+        }
+        else
+        {
+            GameObject playerObject = GameObject.FindGameObjectWithTag(GameConstants.TAG_PLAYER);
+            if (playerObject == null)
+            {
+                Debug.LogError($"Player with tag '{GameConstants.TAG_PLAYER}' not found. SoundManager will be disabled.");
+                enabled = false;
+                return;
+            }
+            player = playerObject.transform;
+        }
     }
 
+    /// <summary>
+    /// Met à jour le volume en fonction de la distance joueur->source.
+    /// </summary>
     void Update()
     {
-        if (player == null) return;
+        if (player == null || audioSource == null) return;
 
-        // Mesurer la distance entre le joueur et la source du son
         float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+        float denom = Mathf.Max(0.0001f, (maxHearingDistance - minHearingDistance));
+        float normalizedDistance = Mathf.Clamp01((distanceToPlayer - minHearingDistance) / denom);
+        float volume = 1f - normalizedDistance;
 
-        // Utiliser l'interpolation linéaire pour calculer le volume en fonction de la distance
-        float normalizedDistance = Mathf.Clamp01((distanceToPlayer - minHearingDistance) / (maxHearingDistance - minHearingDistance));
-        float volume = 1f - normalizedDistance; // Inverser la distance pour que le volume soit plus fort quand le joueur est plus proche
-
-        // Ajuster le volume de l'AudioSource
         audioSource.volume = Mathf.Clamp01(volume);
     }
 }

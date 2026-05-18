@@ -3,6 +3,10 @@ using UnityEngine.InputSystem;
 using DG.Tweening;
 
 [RequireComponent(typeof(PlayerPhysicsHandler))]
+/// <summary>
+/// Gère le saut du joueur en utilisant l'API de <see cref="PlayerPhysicsHandler"/>.
+/// Abonne/désabonne proprement les callbacks d'InputAction et protège contre les références null.
+/// </summary>
 public class PlayerJump : MonoBehaviour
 {
     [SerializeField] private PlayerGameplayConfig _config;
@@ -32,8 +36,25 @@ public class PlayerJump : MonoBehaviour
         _playerController = GetComponent<PlayerController>();
         _physicsHandler = GetComponent<PlayerPhysicsHandler>();
 
-        _playerController.jumpAction.canceled += OnJumpCanceled;
-        _playerController.jumpAction.performed += OnJumpPerformed;
+        if (_playerController == null)
+        {
+            Debug.LogError("PlayerJump requires a PlayerController on the same GameObject.");
+            enabled = false;
+            return;
+        }
+
+        if (_physicsHandler == null)
+        {
+            Debug.LogError("PlayerJump requires a PlayerPhysicsHandler on the same GameObject.");
+            enabled = false;
+            return;
+        }
+
+        if (_playerController.jumpAction != null)
+        {
+            _playerController.jumpAction.canceled += OnJumpCanceled;
+            _playerController.jumpAction.performed += OnJumpPerformed;
+        }
     }
 
     void OnDestroy()
@@ -100,9 +121,9 @@ public class PlayerJump : MonoBehaviour
 
     bool CanJumpNow()
     {
-        return _physicsHandler.IsGrounded
-            || _physicsHandler.WasGroundedLastFrame
-            || _playerController.Controller.isGrounded;
+        bool physicsGrounded = _physicsHandler != null && (_physicsHandler.IsGrounded || _physicsHandler.WasGroundedLastFrame);
+        bool controllerGrounded = _playerController != null && _playerController.Controller != null && _playerController.Controller.isGrounded;
+        return physicsGrounded || controllerGrounded;
     }
 
     void ActivateFx() => _showJumpFx = true;

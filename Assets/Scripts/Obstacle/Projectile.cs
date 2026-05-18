@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 
+/// <summary>
+/// Représente un projectile se déplaçant vers une position cible et pouvant être détruit.
+/// </summary>
 public class Projectile : MonoBehaviour
 {
     public GameObject fx;

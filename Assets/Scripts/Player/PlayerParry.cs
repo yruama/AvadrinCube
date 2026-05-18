@@ -3,6 +3,10 @@ using UnityEngine;
 using DG.Tweening;
 using UnityEngine.InputSystem;
 
+/// <summary>
+/// Gère la mécanique de parry du joueur : ralentissement du temps, fenêtre de parry,
+/// renvoi ou destruction des projectiles selon l'input directionnel.
+/// </summary>
 public class PlayerParry : MonoBehaviour
 {
     public GameObject _arrow;

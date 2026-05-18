@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Tour statique qui génère périodiquement des projectiles vers une cible.
+/// </summary>
 public class StaticTower : MonoBehaviour
 {
     [SerializeField]

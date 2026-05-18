@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.Events;
 
+/// <summary>
+/// Déclenche des UnityEvent lorsqu'un joueur entre / sort d'une zone de trigger.
+/// </summary>
 public class PlayerDetector : MonoBehaviour
 {
     [SerializeField] private UnityEvent onEnterEvents;

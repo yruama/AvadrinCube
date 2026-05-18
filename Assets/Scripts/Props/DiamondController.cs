@@ -1,6 +1,9 @@
 using UnityEngine;
 using DG.Tweening;
 
+/// <summary>
+/// Comportement visuel d'un diamant (animation, collecte et notification au DiamondManager).
+/// </summary>
 public class DiamondController : MonoBehaviour
 {
     public bool isStar;

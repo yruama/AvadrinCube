@@ -2,6 +2,11 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [DefaultExecutionOrder(-100)]
+/// <summary>
+/// Contrôle une plateforme mobile par waypoints. Déplace la plateforme en FixedUpdate(),
+/// calcule le delta positionnel (FrameDelta) et transporte les passagers (CharacterController)
+/// via <see cref="SetPassenger"/> / <see cref="TransportPassengers"/>.
+/// </summary>
 public class PlatformeController : MonoBehaviour, ISwitchable
 {
     [Header("Waypoints (espace local)")]
@@ -103,6 +108,12 @@ public class PlatformeController : MonoBehaviour, ISwitchable
         TransportPassengers();
     }
 
+    /// <summary>
+    /// Ajoute ou retire un passager (CharacterController) qui doit être transporté
+    /// par cette plateforme. Utilisé par les <see cref="PlayerPhysicsHandler"/> lors de la détection de surface.
+    /// </summary>
+    /// <param name="passenger">Le CharacterController du joueur.</param>
+    /// <param name="isRiding">True pour attacher, false pour détacher.</param>
     public void SetPassenger(CharacterController passenger, bool isRiding)
     {
         if (passenger == null)
@@ -140,6 +151,10 @@ public class PlatformeController : MonoBehaviour, ISwitchable
         }
     }
 
+    /// <summary>
+    /// Reconstruit les waypoints globaux à partir des waypoints locaux et
+    /// de la position actuelle de la plateforme. Appeler après modification du transform.
+    /// </summary>
     public void RebuildGlobalWaypoints()
     {
         if (localWaypoints == null || localWaypoints.Length == 0)
@@ -230,6 +245,9 @@ public class PlatformeController : MonoBehaviour, ISwitchable
 
     private static float EaseInOut(float t) => t * t * (3f - 2f * t);
 
+    /// <summary>
+    /// Active le mouvement de la plateforme (démarre le cycle si plusieurs waypoints présents).
+    /// </summary>
     public void Activate()
     {
         _canMove = true;
@@ -240,8 +258,14 @@ public class PlatformeController : MonoBehaviour, ISwitchable
         }
     }
 
+    /// <summary>
+    /// Méthode pratique appelée par un switch pour activer la plateforme.
+    /// </summary>
     public void EnableFromSwitch() => Activate();
 
+    /// <summary>
+    /// Force la plateforme à se déplacer vers le premier waypoint suite à un appel externe (switch).
+    /// </summary>
     public void CallFromSwitch()
     {
         _canMove = false;
@@ -254,5 +278,8 @@ public class PlatformeController : MonoBehaviour, ISwitchable
         timeToReachNextPoint = 1f;
     }
 
+    /// <summary>
+    /// Active la plateforme après un événement lié au déplacement du joueur.
+    /// </summary>
     public void ActivateAfterPlayerMove() => Activate();
 }

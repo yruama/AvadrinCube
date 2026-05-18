@@ -30,13 +30,14 @@ public class SpeedRunManager : MonoBehaviour
 
     void Start() {
         _isActive = false;
-        _player = GameRegistry.Instance.GetPlayerTransform().gameObject;
-        if (_player == null)
+        if (GameRegistry.Instance == null || GameRegistry.Instance.GetPlayerTransform() == null)
         {
-            Debug.LogError("Player not found in GameRegistry");
+            Debug.LogError("GameRegistry ou PlayerTransform introuvable. SpeedRunManager désactivé.");
             enabled = false;
             return;
         }
+
+        _player = GameRegistry.Instance.GetPlayerTransform().gameObject;
 
         if (PlayerPrefs.GetInt("SpeedRun") == 1) {
             if (_gameManager.saveManager.dataPlayer == null) {
@@ -53,23 +54,38 @@ public class SpeedRunManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Démarre l'enregistrement / replay du speedrun pour ce niveau.
+    /// Instancie le ghost si des données précédentes existent.
+    /// </summary>
     public void LevelStart()
     {
-        if (_previousData != null) 
+        if (_previousData != null && _playerGhostPrefab != null)
             _playerGhost = Instantiate(_playerGhostPrefab);
+
         _isActive = true;
         _currentTime = Time.time;
     }
 
    void FixedUpdate()
     {
-        if (_isActive) {
-            _gameManager.dataLevel.position.Add(new CustomVector3(_player.transform.position));
-             _time = Time.time - _currentTime;
-            _timer.GetComponent<TextMeshProUGUI>().text = Utils.Functions.FormatTime(_time);
+        if (_isActive)
+        {
+            if (_player != null && _gameManager != null && _gameManager.dataLevel != null)
+            {
+                _gameManager.dataLevel.position.Add(new CustomVector3(_player.transform.position));
+            }
+
+            _time = Time.time - _currentTime;
+            if (_timer != null)
+            {
+                var text = _timer.GetComponent<TextMeshProUGUI>();
+                if (text != null) text.text = Utils.Functions.FormatTime(_time);
+            }
         }
 
-        if (_replay &&  _replayId < _previousData.position.Count && _isActive) {
+        if (_replay && _previousData != null && _replayId < _previousData.position.Count && _isActive && _playerGhost != null)
+        {
             _playerGhost.transform.position = _previousData.position[_replayId].GetVector();
             _replayId += 1;
         }

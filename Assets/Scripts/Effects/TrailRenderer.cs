@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Affiche un trait entre la position du joueur et un point de référence (visuel).
+/// </summary>
 public class TrailRenderer : MonoBehaviour
 {
     public LineRenderer lr;

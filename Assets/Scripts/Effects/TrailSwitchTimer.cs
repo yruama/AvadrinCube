@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Met à jour dynamiquement une LineRenderer pour suivre une cible (utilisé pour indicateurs visuels).
+/// </summary>
 public class TrailSwitchTimer : MonoBehaviour
 {
     private LineRenderer lr;

@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 using DG.Tweening;
 
+/// <summary>
+/// Fournit une animation de tremblement de la caméra via DOTween.
+/// </summary>
 public class CameraShake : MonoBehaviour
 {
     [Header("Shake Settings")]

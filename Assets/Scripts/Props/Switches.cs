@@ -14,6 +14,10 @@ enum SwitchCall
     ActiveScript
 }
 
+/// <summary>
+/// Comportement de switch (pression ou projectile) qui active/désactive des cibles.
+/// Supporte un mode temporisé et le broadcast vers des objets non-ISwitchable.
+/// </summary>
 public class Switches : MonoBehaviour, IResettable
 {
     [SerializeField] private Material activatedMaterial;

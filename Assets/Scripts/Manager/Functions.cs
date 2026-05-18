@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 
 namespace Utils
 {
+    /// <summary>
+    /// Collection de fonctions utilitaires (formatage temps, fade CanvasGroup) utilisées par l'UI.
+    /// </summary>
     public class Functions
     {
         public static string FormatTime(float time)

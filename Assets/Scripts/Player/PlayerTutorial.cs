@@ -1,6 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Joue une trajectoire pré-enregistrée (ghost) depuis les données JSON contenues dans Resources.
+/// Utile pour tutoriels ou démonstrations.
+/// </summary>
 public class PlayerTutorial : MonoBehaviour
 {
     public string fileName;

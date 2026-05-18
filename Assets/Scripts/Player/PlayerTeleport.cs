@@ -1,6 +1,10 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+/// <summary>
+/// Permet d'enregistrer une position et de s'y téléporter via un marqueur instancié.
+/// Utilise <see cref="PlayerController"/> pour vérifier les permissions d'action.
+/// </summary>
 public class PlayerTeleport : MonoBehaviour
 {
     private enum TeleportState { SavePos, Teleport }

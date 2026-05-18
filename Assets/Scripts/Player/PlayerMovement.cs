@@ -1,6 +1,10 @@
 using UnityEngine;
 
 [RequireComponent(typeof(PlayerPhysicsHandler))]
+/// <summary>
+/// Lit l'entrée du joueur et transmet la vitesse désirée à la <see cref="PlayerPhysicsHandler"/>.
+/// Sépare la lecture d'entrée (Update) de l'application physique (FixedUpdate dans le handler).
+/// </summary>
 public class PlayerMovement : MonoBehaviour, IResettable
 {
     [SerializeField] private PlayerGameplayConfig _config;
@@ -19,6 +23,13 @@ public class PlayerMovement : MonoBehaviour, IResettable
 
         if (_config != null)
             _moveSpeed = _config.moveSpeed;
+
+        if (_physicsHandler == null)
+        {
+            Debug.LogError("PlayerMovement requires a PlayerPhysicsHandler sur le GameObject.");
+            enabled = false;
+            return;
+        }
     }
 
     private void Update()
@@ -36,6 +47,10 @@ public class PlayerMovement : MonoBehaviour, IResettable
         _physicsHandler?.SetDesiredHorizontalVelocity(_desiredVelocity);
     }
 
+    /// <summary>
+    /// Réinitialise l'état du joueur (position de départ, velocities) utilisé par les systèmes de reset.
+    /// Détache le joueur de toute plateforme si nécessaire.
+    /// </summary>
     public void ResetState()
     {
         transform.position = _startPosition;

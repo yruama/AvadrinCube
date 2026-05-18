@@ -7,6 +7,10 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Utilities;
 using System.Threading.Tasks;
 
+/// <summary>
+/// Coordonne des fonctionnalités globales du jeu (chargement, niveau, gestion d'UI liée au démarrage).
+/// Les dépendances (SaveManager, SpeedRunManager) sont récupérées depuis l'inspecteur ou le <see cref="GameRegistry"/> si possible.
+/// </summary>
 public class GameManager : MonoBehaviour
 {
     [SerializeField] CanvasGroup _fade;
@@ -30,8 +34,20 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        saveManager.Load();
-        //saveManager.WriteInConsolePlayerData();
+        if (saveManager == null && GameRegistry.Instance != null)
+            saveManager = GameRegistry.Instance.GetSaveManager();
+
+        if (saveManager != null)
+        {
+            saveManager.Load();
+        }
+        else
+        {
+            Debug.LogWarning("SaveManager non assigné et introuvable dans GameRegistry. Chargement ignoré.");
+        }
+
+        if (speedRunManager == null && GameRegistry.Instance != null)
+            speedRunManager = GameRegistry.Instance.GetSpeedRunManager();
 
         Control _control = new Control();
         InputAction moveAction = _control.Player.Move;
@@ -50,10 +66,15 @@ public class GameManager : MonoBehaviour
 
         _levelRunning = true;
         await Utils.Functions.HideCanvasGroup(canvas);
-        speedRunManager.LevelStart();
+        if (speedRunManager != null)
+            speedRunManager.LevelStart();
+        else
+            Debug.LogWarning("SpeedRunManager introuvable lors du démarrage du niveau.");
     }
 
-
+    /// <summary>
+    /// Initialise l'enregistrement de la session de niveau.
+    /// </summary>
     public void LevelStart()
     {
         dataLevel = new DataLevel();
@@ -61,26 +82,5 @@ public class GameManager : MonoBehaviour
 
     public void LevelEnd()
     {
-        /*_isActive = false;
-         //int diamond = _diamondManager.nbDiamond;
-
-         if (_previousData != null) {
-             _data = _previousData;
-             if (_previousData.time > _data.time)
-                 _data.time = _gameManager.TimerLevel;
-             if (_previousData.nbDiamond < diamond)
-                  _data.nbDiamond = diamond;
-         } else {
-             _data.time = _gameManager.TimerLevel;
-             //_data.nbDiamond = diamond;
-         }
-
-         if (SaveManager._data.data.ContainsKey(_gameManager.currentLevel)) {
-             SaveManager._data.data[_gameManager.currentLevel] = _data;
-         } else {
-             SaveManager._data.data.Add(_gameManager.currentLevel, _data);
-         }
-
-         SaveManager.Save();*/
     }
 }

@@ -14,7 +14,9 @@ public enum Actions
 }
 
 /// <summary>
-/// Hub central : input, capacités débloquées, état partagé minimal.
+/// Hub central : lecture des InputActions et garde l'état des permissions du joueur
+/// (Move, Jump, Parry, Teleport). Les modules interrogeront cette classe pour savoir
+/// si une action est autorisée.
 /// </summary>
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour

@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Fait tourner le skybox en modifiant la propriété _Rotation du shader selon le temps.
+/// </summary>
 public class WorldRotation : MonoBehaviour
 {
     public float speed;

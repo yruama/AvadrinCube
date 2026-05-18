@@ -1,6 +1,9 @@
 using UnityEngine;
 using DG.Tweening;
 
+/// <summary>
+/// Teleporte le joueur (ou redirige les projectiles parry) vers une cible spécifiée.
+/// </summary>
 public class Teleport : MonoBehaviour
 {
     [SerializeField] private Transform _target;

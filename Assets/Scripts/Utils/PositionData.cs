@@ -2,6 +2,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
+/// <summary>
+/// Conteneur de positions sérialisable pour sauvegarder/charger des trajectoires.
+/// </summary>
 public class PositionData
 {
     public List<Vector3> positions = new List<Vector3>();
